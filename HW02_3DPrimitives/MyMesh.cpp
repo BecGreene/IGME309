@@ -64,6 +64,7 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	//GenerateCube(a_fRadius * 2.0f, a_v3Color);
 	// -------------------------------
 
+	// Create circle
 	std::vector<vector3 > vertex;
 	GLfloat theta = 0;
 	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
@@ -75,6 +76,7 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 		vertex.push_back(temp);
 	}
 
+	// Create base and triangle sides
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
 		AddTri(ZERO_V3, vertex[(i + 1) % a_nSubdivisions], vertex[i]);
@@ -105,6 +107,7 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	//GenerateCube(a_fRadius * 2.0f, a_v3Color);
 	// -------------------------------
 
+	// Create circle
 	std::vector<vector3 > vertex;
 	GLfloat theta = 0;
 	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
@@ -116,6 +119,7 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 		vertex.push_back(temp);
 	}
 
+	// Create 2 circle bases and quad sides based on base vertices
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
 		float tempVertex = vertex[i].z + a_fHeight;
@@ -165,6 +169,7 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	GLfloat theta = 0;
 	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
 
+	// Create vertices based off of circles
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
 		vector3 tempOuter = vector3(cos(theta) * a_fOuterRadius, sin(theta) * a_fOuterRadius, 0.0f);
@@ -174,12 +179,7 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 		vertexInner.push_back(tempInner);
 	}
 
-	//for (int i = 0; i < a_nSubdivisions; i++)
-	//{;
-	//	theta += delta;
-
-	//}
-
+	// Create outer sides
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
 		float tempVertex = vertexOuter[i].z + a_fHeight;
@@ -190,6 +190,7 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 			vector3(vertexOuter[(i + 1) % a_nSubdivisions].x, vertexOuter[(i + 1) % a_nSubdivisions].y, tempVertex_Sub));
 	}
 
+	// Create inner sides
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
 		float tempVertex = vertexInner[i].z + a_fHeight;
@@ -200,6 +201,7 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 			vertexInner[(i + 1) % a_nSubdivisions]);
 	}
 
+	// Create connection between outer and inner sides
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
 		float tempVertex_O = vertexOuter[i].z + a_fHeight;
@@ -245,16 +247,15 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	Init();
 
 	// Replace this with your code
-	//GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
+	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
 	// -------------------------------
 
 	// NOTE: THIS DOES NOT WORK
 	// Got help from "Computer Graphics Programming in OpenGL With C++"
 
 	std::vector<vector3> vertex;
-	GLfloat theta = 0;
-	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisionsB));
 	
+	// Calculate first ring
 	for (int i = 0; i < a_nSubdivisionsB; i++)
 	{
 		glm::mat4 rotateMat = glm::rotate(glm::mat4(1.0f), ((i * 360.0f) / a_nSubdivisionsB), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -262,12 +263,14 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 		vertex.push_back(vector3(position + vector3(a_fInnerRadius, 0.0f, 0.0f)));
 	}
 
+	// Rotate ring to get other rings
 	for (int i = 1; i < a_nSubdivisionsB + 1; i++)
 	{
 		glm::mat4 rotateMat = glm::rotate(glm::mat4(1.0f), ((i * 360.0f) / a_nSubdivisionsB), glm::vec3(0.0f, 0.0f, 1.0f));
-		vertex[i * (a_nSubdivisionsB + 1) + i] = (vector3(rotateMat * vector4(vertex[i], 0.0f)));
+		//vertex[i * (a_nSubdivisionsB + 1) + i] = (vector3(rotateMat * vector4(vertex[i], 0.0f)));
 	}
 
+	// Calculate sides of torus
 	for (int i = 0; i < a_nSubdivisionsB; i++)
 	{
 		AddTri(vertex[i], vertex[(i + 1) % a_nSubdivisionsB], vertex[i]);
@@ -307,34 +310,40 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 	GLfloat delta = static_cast<GLfloat>(2.0 * PI / static_cast<GLfloat>(a_nSubdivisions));
 	float sectorAngle;
 
+	// Build vertices
 	for (int i = 0; i <= a_nSubdivisions; i++)
 	{
+		// Create angle
 		sectorAngle = 2.0f * PI - i * delta;
 		float xy = cosf(sectorAngle) * a_fRadius;
 		float z = sinf(sectorAngle) * a_fRadius;
 
 		for (int j = 0; j <= a_nSubdivisions; j++)
 		{
+			// vertex position
 			sectorAngle = j * delta;
 			float x = xy * cosf(sectorAngle);
 			float y = xy * sinf(sectorAngle);
 			vector3 temp = vector3(x, y, z);
 			vertex.push_back(temp);
 
-			float length = 1.0f / a_fRadius;
-			float nx = x * length;
-			float ny = y * length;
-			float nz = z * length;
-			vector3 normalTemp = vector3(nx, ny, nz);
-			normalVertex.push_back(normalTemp);
+			// normal vertices
+			//float length = 1.0f / a_fRadius;
+			//float nx = x * length;
+			//float ny = y * length;
+			//float nz = z * length;
+			//vector3 normalTemp = vector3(nx, ny, nz);
+			//normalVertex.push_back(normalTemp);
 
-			float s = (float)j / a_nSubdivisions;
-			float t = (float)i / a_nSubdivisions;
-			textVertex.push_back(s);
-			textVertex.push_back(t);
+			// text corrdinates
+			//float s = (float)j / a_nSubdivisions;
+			//float t = (float)i / a_nSubdivisions;
+			//textVertex.push_back(s);
+			//textVertex.push_back(t);
 		}
 	}
 
+	// Create triangles to fill circle
 	for (int i = 0; i < a_nSubdivisions; i++)
 	{
 		vector3 tempVertex = vertex[i + 1];
