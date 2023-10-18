@@ -55,25 +55,38 @@ void Application::Display(void)
 	{
 	default:
 	case 1:
-		m_pCamera->ResetCamera();
+		m_pCamera->ResetCamera(); // Original view
 		break;
 	case 2:
 		m_pCamera->ResetCamera();
+		m_pCamera->SetPerspective(false); // Change to ortho view
 		break;
 	case 3:
 		m_pCamera->ResetCamera();
+		m_pCamera->SetPerspective(false); // Change to ortho view
+		m_pCamera->SetPosition(vector3(10.0f, 0.0f, 0.0f)); // Set camera position
+		m_pCamera->SetUp(vector3(0.0f, 0.0f, 1.0f)); // Set camera's up
+		m_pCamera->SetHorizontalPlanes(vector2(-20.0f, 20.0f)); // Change horizontal perspective
+		m_pCamera->SetVerticalPlanes(vector2(20.0f, -20.0f)); // Change vertical perspective
 		break;
 	case 4:
 		m_pCamera->ResetCamera();
+		m_pCamera->SetNearFar(vector2(0.1f, -1.0f)); // Change near far persepctive
+		m_pCamera->SetPosition(vector3(0.0f, 0.0f, -17.0f)); // Set camera position
 		break;
 	case 5:
 		m_pCamera->ResetCamera();
+		m_pCamera->SetNearFar(vector2(5.0f, 1000.0f)); // Change near far persepctive
+		m_pCamera->SetPosition(vector3(0.0f, 0.0f, -15.0f)); // Set camera position
 		break;
 	case 6:
 		m_pCamera->ResetCamera();
+		m_pCamera->SetNearFar(vector2(0.1f, 15.0f)); // Change near far persepctive
+		m_pCamera->SetPosition(vector3(0.0f, 0.0f, -16.0f)); // Set camera position
 		break;
 	case 7:
 		m_pCamera->ResetCamera();
+		m_pCamera->SetUp(vector3(0.0f, -1.0f, 0.0f)); // Set camera's up
 		break;
 	}
 
