@@ -21,16 +21,34 @@ void MyCamera::MoveForward(float a_fDistance)
 	//		 in the _Binary folder you will notice that we are moving 
 	//		 backwards and we never get closer to the plane as we should 
 	//		 because as we are looking directly at it.
-	m_v3Position += vector3(0.0f, 0.0f, a_fDistance);
-	m_v3Target += vector3(0.0f, 0.0f, a_fDistance);
+
+	// Original movement
+	//m_v3Position += vector3(0.0f, 0.0f, -a_fDistance);
+	//m_v3Target += vector3(0.0f, 0.0f, -a_fDistance);
+
+	// Movement within camera view
+	m_v3Position += m_v3Forward * a_fDistance;
+	m_v3Target += m_v3Forward * a_fDistance;
 }
 void MyCamera::MoveVertical(float a_fDistance)
 {
-	//Tip:: Look at MoveForward
+	// Original movement
+	//m_v3Position += vector3(0.0f, -a_fDistance, 0.0f);
+	//m_v3Target += vector3(0.0f, -a_fDistance, 0.0f);
+
+	// Movement within camera view
+	m_v3Position += m_v3Upward * a_fDistance;
+	m_v3Target += m_v3Upward * a_fDistance;
 }
 void MyCamera::MoveSideways(float a_fDistance)
 {
-	//Tip:: Look at MoveForward
+	// Original movement
+	//m_v3Position += vector3(a_fDistance, 0.0f, 0.0f);
+	//m_v3Target += vector3(a_fDistance, 0.0f, 0.0f);
+
+	// Movement within camera view
+	m_v3Position += m_v3Rightward * a_fDistance;
+	m_v3Target += m_v3Rightward * a_fDistance;
 }
 void MyCamera::CalculateView(void)
 {
@@ -40,7 +58,26 @@ void MyCamera::CalculateView(void)
 	//		 it will receive information from the main code on how much these orientations
 	//		 have change so you only need to focus on the directional and positional 
 	//		 vectors. There is no need to calculate any right click process or connections.
+
+	// Rotations variables using quaternions
+	quaternion pitch = glm::angleAxis(m_v3PitchYawRoll.x, m_v3Rightward);
+	quaternion yaw = glm::angleAxis(m_v3PitchYawRoll.y, m_v3Upward);
+
+	// Calculate side-to-side and vertical axis
+	m_v3Forward = glm::rotate(pitch, m_v3Forward);
+	m_v3Forward = glm::rotate(yaw, m_v3Forward);
+
+	// Calculate front-to-back axis 
+	m_v3Rightward = glm::cross(m_v3Forward, m_v3Upward);
+
+	// Update target
+	m_v3Target = m_v3Forward + m_v3Position;
+
+	// Update view
 	m_m4View = glm::lookAt(m_v3Position, m_v3Target, m_v3Upward);
+
+	// Reset rotation
+	m_v3PitchYawRoll = ZERO_V3;
 }
 //You can assume that the code below does not need changes unless you expand the functionality
 //of the class or create helper methods, etc.
