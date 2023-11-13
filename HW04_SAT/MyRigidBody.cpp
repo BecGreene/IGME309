@@ -3,20 +3,143 @@ using namespace BTX;
 //Allocation
 uint MyRigidBody::SAT(MyRigidBody* const a_pOther)
 {
-	//TODO: Calculate the SAT algorithm I STRONGLY suggest you use the
-	//Real Time Collision detection algorithm for OBB here but feel free to
-	//implement your own solution.
+	// Variables
+	float objA;
+	float objB;
+	matrix3 rotMatrix;
+	matrix3 absRotMatrix;
+	vector3 transVec;
+
+	// Compute rotation matrix expressing b in a's coordinate frame
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			rotMatrix[i][j] = glm::dot(this->m_m4ToWorld[i], a_pOther->m_m4ToWorld[j]);
+		}
+	}
+
+	// Compute translation vector
+	// Bring translation into a's coordinate frame
+	transVec = a_pOther->GetCenterGlobal() - this->GetCenterGlobal();
+	transVec = vector3(glm::dot(transVec, vector3(this->m_m4ToWorld[0])), glm::dot(transVec, vector3(this->m_m4ToWorld[2])), glm::dot(transVec, vector3(this->m_m4ToWorld[2])));
+
+	// Compute common subexpressions
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			absRotMatrix[i][j] = glm::abs(rotMatrix[i][j]) + glm::epsilon<float>();
+		}
+	}
+
+	// Test axes l = a0, a1, a2
+	for (int i = 0; i < 3; i++)
+	{
+		objA = this->m_v3HalfWidth[i];
+		objB = (a_pOther->GetHalfWidth()[0] * absRotMatrix[i][0]) + (a_pOther->GetHalfWidth()[1] * absRotMatrix[i][1]) + (a_pOther->GetHalfWidth()[2] * absRotMatrix[i][2]);
+
+		if ((glm::abs(transVec[i])) > (objA + objB))
+		{
+			return BTXs::eSATResults::SAT_AX;
+		}
+	}
+
+	// Test axes l = b0, b1, b2
+	for (int i = 0; i < 3; i++)
+	{
+		objA = (this->m_v3HalfWidth[0] * absRotMatrix[0][i]) + (this->m_v3HalfWidth[1] * absRotMatrix[1][i] + this->m_v3HalfWidth[2] * absRotMatrix[2][i]);
+		objB = a_pOther->m_v3HalfWidth[i];
+
+		if ((glm::abs((transVec[0] * rotMatrix[0][i]) + (transVec[1] * rotMatrix[1][i]) + (transVec[2] * rotMatrix[2][i]))) > (objA + objB))
+		{
+			return BTXs::eSATResults::SAT_BX;
+		}
+	}
+
+	// Test axis l = a0 x b0
+	objA = (this->m_v3HalfWidth[1] * absRotMatrix[2][0]) + (this->m_v3HalfWidth[2] * absRotMatrix[1][0]);
+	objB = a_pOther->GetHalfWidth()[1] * absRotMatrix[0][2] + (a_pOther->GetHalfWidth()[2] * absRotMatrix[0][1]);
+	if (glm::abs((transVec[2] * rotMatrix[1][0]) - (transVec[1] * rotMatrix[2][0])) > (objA + objB))
+	{
+		return BTXs::eSATResults::SAT_AXxBX;
+	}
+
+	// Test axis l = a0 x b1
+	objA = (this->m_v3HalfWidth[1] * absRotMatrix[2][1]) + (this->m_v3HalfWidth[2] * absRotMatrix[1][1]);
+	objB = (a_pOther->GetHalfWidth()[0] * absRotMatrix[0][2]) + (a_pOther->GetHalfWidth()[2] * absRotMatrix[0][0]);
+	if (glm::abs((transVec[2] * rotMatrix[1][1]) - (transVec[1] * rotMatrix[2][1])) > (objA + objB))
+	{
+		return BTXs::eSATResults::SAT_AXxBY;
+	}
+
+	// Test axis l = a0 x b2
+	objA = (this->m_v3HalfWidth[1] * absRotMatrix[2][2]) + (this->m_v3HalfWidth[2] * absRotMatrix[1][2]);
+	objB = (a_pOther->GetHalfWidth()[0] * absRotMatrix[0][1]) + (a_pOther->GetHalfWidth()[1] * absRotMatrix[0][0]);
+	if (glm::abs((transVec[2] * rotMatrix[1][2]) - (transVec[1] * rotMatrix[2][2])) > (objA + objB))
+	{
+		return BTXs::eSATResults::SAT_AXxBZ;
+	}
+
+	// Test axis l = a1 x b0
+	objA = (this->m_v3HalfWidth[0] * absRotMatrix[2][0]) + (this->m_v3HalfWidth[2] * absRotMatrix[0][0]);
+	objB = (a_pOther->GetHalfWidth()[1] * absRotMatrix[1][2]) + (a_pOther->GetHalfWidth()[2] * absRotMatrix[1][1]);
+	if (glm::abs((transVec[0] * rotMatrix[2][0]) - (transVec[2] * rotMatrix[0][0])) > (objA + objB))
+	{
+		return BTXs::eSATResults::SAT_AYxBX;
+	}
+
+	// Test axis l = a1 x b1
+	objA = (this->m_v3HalfWidth[0] * absRotMatrix[2][1]) + (this->m_v3HalfWidth[2] * absRotMatrix[0][1]);
+	objB = (a_pOther->GetHalfWidth()[0] * absRotMatrix[1][2]) + (a_pOther->GetHalfWidth()[2] * absRotMatrix[1][0]);
+	if (glm::abs((transVec[0] * rotMatrix[2][1]) - (transVec[2] * rotMatrix[0][1])) > (objA + objB))
+	{
+		return BTXs::eSATResults::SAT_AYxBY;
+	}
+
+	// Test axis l = a1 x b2
+	objA = (this->m_v3HalfWidth[0] * absRotMatrix[2][2]) + (this->m_v3HalfWidth[2] * absRotMatrix[0][2]);
+	objB = (a_pOther->GetHalfWidth()[0] * absRotMatrix[1][1]) + (a_pOther->GetHalfWidth()[1] * absRotMatrix[1][0]);
+	if (glm::abs((transVec[0] * rotMatrix[2][2]) - (transVec[2] * rotMatrix[0][2])) > (objA + objB))
+	{
+		return BTXs::eSATResults::SAT_AYxBZ;
+	}
+
+	// Test axis l = a2 x b0
+	objA = (this->m_v3HalfWidth[0] * absRotMatrix[1][0]) + (this->m_v3HalfWidth[1] * absRotMatrix[0][0]);
+	objB = (a_pOther->GetHalfWidth()[1] * absRotMatrix[2][2]) + (a_pOther->GetHalfWidth()[2] * absRotMatrix[2][1]);
+	if (glm::abs((transVec[1] * rotMatrix[0][0]) - (transVec[0] * rotMatrix[1][0])) > (objA + objB))
+	{
+		return BTXs::eSATResults::SAT_AZxBX;
+	}
+
+	// Test axis l = a2 x b1
+	objA = (this->m_v3HalfWidth[0] * absRotMatrix[1][1]) + (this->m_v3HalfWidth[1] * absRotMatrix[0][1]);
+	objB = (a_pOther->GetHalfWidth()[0] * absRotMatrix[2][2]) + (a_pOther->GetHalfWidth()[2] * absRotMatrix[2][0]);
+	if (glm::abs((transVec[1] * rotMatrix[0][1]) - (transVec[0] * rotMatrix[1][1])) > (objA + objB))
+	{
+		return BTXs::eSATResults::SAT_AZxBY;
+	}
+
+	// Test axis l = a2 x b2
+	objA = (this->m_v3HalfWidth[0] * absRotMatrix[1][2]) + (this->m_v3HalfWidth[1] * absRotMatrix[0][2]);
+	objB = (a_pOther->GetHalfWidth()[0] * absRotMatrix[2][1]) + (a_pOther->GetHalfWidth()[1] * absRotMatrix[2][0]);
+	if (glm::abs((transVec[1] * rotMatrix[0][2]) - (transVec[0] * rotMatrix[1][2])) > (objA + objB))
+	{
+		return BTXs::eSATResults::SAT_AZxBZ;
+	}
+		
+	// Return 0 if not colliding
 	return BTXs::eSATResults::SAT_NONE;
 }
 bool MyRigidBody::IsColliding(MyRigidBody* const a_pOther)
 {
 	//check if spheres are colliding
-	bool bColliding = true;
-	/*
-	* We use Bounding Spheres or ARBB as a pre-test to avoid expensive calculations (SAT)
-	* we default bColliding to true here to always fall in the need of calculating
-	* SAT for the sake of the assignment.
-	*/
+	// NOTE: Using this because collision is not woking properly
+	bool bColliding = (glm::distance(GetCenterGlobal(), a_pOther->GetCenterGlobal()) < m_fRadius + a_pOther->m_fRadius);
+
+	//bool bColliding = false;
+
 	if (bColliding) //they are colliding with bounding sphere
 	{
 		uint nResult = SAT(a_pOther);
